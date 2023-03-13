@@ -1,34 +1,39 @@
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import axios from "axios";
-
 import Card from "./Card.vue";
 
-const pokemons = ref(null);
+const characters = ref(null);
 const page = ref(0);
 
-const response = await axios.get("https://pokeapi.co/api/v2/pokemon/?limit=8");
+onMounted(async () => {
+  const response = await axios.get("https://rickandmortyapi.com/api/character");
+  characters.value = response.data.results;
+});
 
-pokemons.value = response.data.results;
-
-watch(page, async () => {
+watch(async () => {
   const res = await axios.get(
-    `https://pokeapi.co/api/v2/pokemon/?limit=8&offset=${page.value * 8}`
+    `https://rickandmortyapi.com/api/character/?page=${page.value}`
   );
-  pokemons.value = res.data.results;
-  console.log(pokemons.value);
+  characters.value = res.data.results;
+  console.log(characters);
 });
 </script>
 
 <template>
   <div class="container">
-    <div class="cards">
+    <div v-if="characters" class="cards">
       <Card
-        v-for="pokemon in pokemons"
-        :image="pokemon.image"
-        :key="pokemon.id"
-        :name="pokemon.name"
-      />
+        v-for="character in characters"
+        :key="character.id"
+        :image="character.image"
+        :name="character.name"
+      >
+        <p>{{ character.location.name }}</p>
+      </Card>
+    </div>
+    <div v-else class="cards spinner">
+      <n-spin size="large" />
     </div>
     <div class="button-container">
       <button @click="page--" class="button">&lt;</button>
@@ -47,7 +52,6 @@ watch(page, async () => {
   margin: 0 auto;
   display: flex;
   flex-wrap: wrap;
-  height: 700px;
 }
 .cards h3 {
   font-weight: bold;
